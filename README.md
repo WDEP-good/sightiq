@@ -1,5 +1,8 @@
-# Vue 3 + TypeScript + Vite
+- 摄像头部分(k3s)                shifu/树莓派     
+- startrocks(k8s)               SQL
+- server/Redis(k8s)             Rust
+- nginx/kong(k8s)               shell
+- 前端部分(k8s)                  Vite+vue
+- kafaka/flink/大模型分析(k8s)   python
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
-
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+![白板文件](./白板文件.png) 
