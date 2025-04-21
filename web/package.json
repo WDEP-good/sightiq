@@ -1,21 +1,49 @@
 {
-  "name": "sightiq-web",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "vue": "^3.5.13"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^5.2.2",
-    "@vue/tsconfig": "^0.7.0",
-    "typescript": "~5.7.2",
-    "vite": "^6.3.1",
-    "vue-tsc": "^2.2.8"
-  }
+    "name": "echar",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite --open",
+        "build": "vue-tsc && vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@ant-design/icons-vue": "^7.0.1",
+        "@antv/g6": "^4.8.24",
+        "@element-plus/icons-vue": "^2.3.1",
+        "@kjgl77/datav-vue3": "^1.7.2",
+        "@tsparticles/slim": "^3.3.0",
+        "@tsparticles/vue3": "^3.0.1",
+        "amap": "^1.0.7",
+        "ant-design-vue": "4.0.0-rc.6",
+        "axios": "^1.6.8",
+        "bootstrap": "5.3.0-alpha1",
+        "dayjs": "^1.11.11",
+        "echarts": "^5.5.0",
+        "element-plus": "^2.7.0",
+        "jquery": "^3.7.1",
+        "less": "^4.2.0",
+        "path": "^0.12.7",
+        "pinia": "^2.1.7",
+        "tsparticles": "^3.3.0",
+        "tsparticles-engine": "^2.12.0",
+        "vue": "^3.4.21",
+        "vue-router": "^4.3.0"
+    },
+    "devDependencies": {
+        "@types/jquery": "^3.5.29",
+        "@types/node": "^20.12.7",
+        "@vitejs/plugin-vue": "^5.0.4",
+        "fast-glob": "^3.3.2",
+        "typescript": "^5.2.2",
+        "vite": "^5.2.0",
+        "vite-plugin-svg-icons": "^2.0.1",
+        "vue-tsc": "^2.0.6"
+    },
+    "description": "This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.",
+    "main": "index.js",
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
 }

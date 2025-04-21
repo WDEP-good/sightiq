@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 595.28 841.89" style="enable-background:new 0 0 595.28 841.89;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#8FC439;stroke-width:12.7418;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#8FC439;stroke-width:13.5846;stroke-miterlimit:10;}
+	.st2{fill:none;stroke:url(#SVGID_1_);stroke-width:9.4659;stroke-miterlimit:10;}
+	.st3{fill:#C3181F;stroke:#E60012;stroke-width:3.8236;stroke-miterlimit:10;}
+	.st4{font-family:'AdobeSongStd-Light-GBpc-EUC-H';}
+	.st5{font-size:48.4849px;}
+	.st6{fill:none;stroke:#000000;stroke-width:2.6902;stroke-miterlimit:10;}
+	.st7{fill:none;stroke:#000000;stroke-width:6.7081;stroke-miterlimit:10;}
+	.st8{fill:#EFEA3A;stroke:#EFEA3A;stroke-width:3.3274;stroke-miterlimit:10;}
+	.st9{fill:#EFEA3A;stroke:#EFEA3A;stroke-width:3.923;stroke-miterlimit:10;}
+</style>
+<path class="st0" d="M303.6,507.69c0,64.69-48.31,118.02-111.09,126.42c-2.89,0.4-5.83,0.73-8.76,0.89
+	c-5.97-1.41-10.42-7.88-10.42-15.64V396.01c0-7.64,4.34-13.98,10.13-15.56c3.22,0.28,6.4,0.61,9.55,1.05
+	c34.3,5.09,64.19,23.27,84.17,49.17c2.24,2.79,4.27,5.7,6.22,8.69C296.22,459.12,303.6,482.56,303.6,507.69z"/>
+<path class="st1" d="M104.44,623.57l68.9-76.93v15.64l-61.88,69.09c-1.95,2.18-5.07,2.18-7.02,0
+	C102.52,629.22,102.52,625.71,104.44,623.57z"/>
+<path class="st1" d="M499,344.09c0,60.28-43.71,109.09-97.7,109.09c-35.35,0-66.29-20.93-83.44-52.28l-34.45,38.46
+	c-1.95-2.99-3.98-5.9-6.22-8.69l35.79-39.96c-6.01-14.14-9.37-29.94-9.37-46.63c0-60.28,43.71-109.09,97.7-109.09
+	S499,283.81,499,344.09z"/>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="81.1833" y1="224.6832" x2="494.8167" y2="638.3168">
+	<stop  offset="0" style="stop-color:#187FC4"/>
+	<stop  offset="1" style="stop-color:#187FC4;stop-opacity:0"/>
+</linearGradient>
+<ellipse class="st2" cx="288" cy="431.5" rx="288" ry="287.5"/>
+<text transform="matrix(0.8956 0 0 1 336.167 344.0889)" class="st3 st4 st5">no stop</text>
+<ellipse class="st6" cx="197.38" cy="439.07" rx="9.74" ry="14.41"/>
+<ellipse class="st6" cx="238.84" cy="439.07" rx="11.61" ry="14.41"/>
+<ellipse class="st7" cx="220.6" cy="533.34" rx="23.22" ry="44.04"/>
+<polygon class="st8" points="198.42,442.71 196.33,440.79 193.94,442.13 194.69,438.74 193.11,436.07 195.66,435.9 197.08,432.91 
+	197.9,436.19 200.36,437.01 198.31,439.21 "/>
+<polygon class="st9" points="241.47,443.29 238.72,441.18 235.64,442.54 236.54,438.94 234.43,436.04 237.74,435.92 239.52,432.77 
+	240.66,436.3 243.87,437.26 241.26,439.55 "/>
+</svg>
