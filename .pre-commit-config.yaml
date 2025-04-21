@@ -1,5 +1,5 @@
 repos:
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.2
+  - repo: https://gitee.com/wdep/sightiq.git
+    rev: v1.0.0
     hooks:
       - id: gitleaks
