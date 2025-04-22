@@ -1,8 +1,8 @@
-version: '3.8'
 services:
   redis-master:
-    image: redis:7
+    image: redis:latest
     container_name: redis-master
+    hostname: redis-master
     ports:
       - "6379:6379"
     volumes:
@@ -12,8 +12,9 @@ services:
       - redis-net
 
   redis-slave1:
-    image: redis:7
+    image: redis:latest
     container_name: redis-slave1
+    hostname: redis-slave1
     ports:
       - "6380:6379"
     volumes:
@@ -25,8 +26,9 @@ services:
       - redis-net
 
   redis-slave2:
-    image: redis:7
+    image: redis:latest
     container_name: redis-slave2
+    hostname: redis-slave2
     ports:
       - "6381:6379"
     volumes:
@@ -38,8 +40,9 @@ services:
       - redis-net
 
   redis-sentinel1:
-    image: redis:7
+    image: redis:latest
     container_name: redis-sentinel1
+    hostname: redis-sentinel1
     ports:
       - "26379:26379"
     volumes:
@@ -51,8 +54,9 @@ services:
       - redis-net
 
   redis-sentinel2:
-    image: redis:7
+    image: redis:latest
     container_name: redis-sentinel2
+    hostname: redis-sentinel2
     ports:
       - "26380:26379"
     volumes:
@@ -64,8 +68,9 @@ services:
       - redis-net
 
   redis-sentinel3:
-    image: redis:7
+    image: redis:latest
     container_name: redis-sentinel3
+    hostname: redis-sentinel3
     ports:
       - "26381:26379"
     volumes:
@@ -78,4 +83,5 @@ services:
 
 networks:
   redis-net:
+    name: redis-net
     driver: bridge
