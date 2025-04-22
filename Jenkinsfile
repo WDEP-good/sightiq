@@ -6,19 +6,14 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone Core') {
             steps {
-                git 'https://your.repo.url/project.git'
+                git 'https://gitee.com/wdep/sightiq.git'
             }
         }
-        stage('Install Dependencies') {
+        stage('Install Web Dependencies') {
             steps {
-                sh 'npm install'
-            }
-        }
-        stage('Test') {
-            steps {
-                sh 'npm test'
+                sh 'npm install pnpm -g && pnpm install'
             }
         }
         stage('Build') {
