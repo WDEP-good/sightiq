@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  fe:
+    image: starrocks/fe-ubuntu:latest
+    container_name: starrocks-fe
+    ports:
+      - "8030:8030"   # Web UI
+      - "9030:9030"   # MySQL 接口
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./starrocks-meta:/data/fe
+    command: >
+      bash -c "/opt/starrocks/fe/bin/start_fe.sh --daemon && tail -f /dev/null"
+
+  be:
+    image: starrocks/be-ubuntu:latest
+    container_name: starrocks-be
+    depends_on:
+      - fe
+    ports:
+      - "8040:8040"   # Web UI
+      - "9050:9050"   # BE Thrift RPC
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./starrocks-storage:/data/be
+    command: >
+      bash -c "/opt/starrocks/be/bin/start_be.sh --daemon && tail -f /dev/null"
