@@ -1,18 +1,19 @@
 #[macro_use]
 extern crate rocket;
 
-#[get("/")]
-fn index() -> &'static str {
-    " Hello, world! "
-}
+mod db_manager;
+mod web;
+mod test;
+#[rocket::main]
+async fn main() {
+    // 启动 Redis 操作
+    match db_manager::run_redis() {
+        Ok(_) => println!("Redis operation successful"),
+        Err(e) => println!("Redis operation failed: {}", e),
+    }
 
-
-#[get("/video")]
-fn video() -> &'static str {
-    " Video "
-}
-
-#[launch]
-fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, video])
+    // 启动 Rocket 服务器
+    if let Err(e) = web::launch_rocket().launch().await {
+        println!("Rocket launch failed: {}", e);
+    }
 }
