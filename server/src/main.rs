@@ -3,7 +3,6 @@ extern crate rocket;
 
 mod db_manager;
 mod web;
-mod test;
 #[rocket::main]
 async fn main() {
     // 启动 Redis 操作
