@@ -1,0 +1,121 @@
+# starrocks.yaml
+---
+# 1. FE (Frontend) Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: starrocks-fe-service
+spec:
+  ports:
+    - name: mysql-port
+      port: 9030
+      targetPort: 9030
+    - name: http-port
+      port: 8030
+      targetPort: 8030
+  selector:
+    app: starrocks-fe
+---
+# 2. FE StatefulSet (单节点，生产建议3节点)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: starrocks-fe
+spec:
+  serviceName: starrocks-fe-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: starrocks-fe
+  template:
+    metadata:
+      labels:
+        app: starrocks-fe
+    spec:
+      containers:
+        - name: fe
+          image: starrocks/fe-ubuntu:latest
+          ports:
+            - containerPort: 9030  # MySQL协议端口
+            - containerPort: 8030  # HTTP端口
+          env:
+            - name: FE_SERVERS
+              value: "fe1=starrocks-fe-0.starrocks-fe-service:9010"
+          volumeMounts:
+            - name: fe-meta
+              mountPath: /opt/starrocks/fe/meta
+      volumes:
+        - name: fe-meta
+          persistentVolumeClaim:
+            claimName: fe-meta-pvc
+  volumeClaimTemplates:
+    - metadata:
+        name: fe-meta
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+# 3. FE持久化存储PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fe-meta-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard  # 根据你的K8s环境修改（如local-path, gp2等）
+---
+# 4. BE (Backend) Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: starrocks-be-service
+spec:
+  clusterIP: None  # Headless Service
+  ports:
+    - port: 9060
+      targetPort: 9060
+  selector:
+    app: starrocks-be
+---
+# 5. BE StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: starrocks-be
+spec:
+  serviceName: starrocks-be-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: starrocks-be
+  template:
+    metadata:
+      labels:
+        app: starrocks-be
+    spec:
+      containers:
+        - name: be
+          image: starrocks/be-ubuntu:latest
+          ports:
+            - containerPort: 9060  # BE服务端口
+          volumeMounts:
+            - name: be-data
+              mountPath: /opt/starrocks/be/storage
+      volumes:
+        - name: be-data
+          persistentVolumeClaim:
+            claimName: be-data-pvc
+  volumeClaimTemplates:
+    - metadata:
+        name: be-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi  # BE需要

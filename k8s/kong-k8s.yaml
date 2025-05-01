@@ -1,0 +1,91 @@
+---
+# 示例服务 Deployment 和 Service（httpbin）
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin
+  template:
+    metadata:
+      labels:
+        app: httpbin
+    spec:
+      containers:
+        - name: httpbin
+          image: kong/httpbin
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin
+  namespace: default
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: httpbin
+---
+# KongPlugin：API Key 验证
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: key-auth
+  namespace: default
+config:
+  key_names:
+    - apikey
+  hide_credentials: true
+plugin: key-auth
+---
+# KongConsumer：API 用户
+apiVersion: configuration.konghq.com/v1
+kind: KongConsumer
+metadata:
+  name: demo-consumer
+  namespace: default
+username: demo-user
+credentials:
+  - demo-key
+---
+# KongCredential：API Key
+apiVersion: configuration.konghq.com/v1
+kind: KongCredential
+metadata:
+  name: demo-key
+  namespace: default
+consumerRef: demo-consumer
+type: key-auth
+config:
+  key: my-secret-api-key
+---
+# Ingress 路由，绑定插件
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: httpbin-ingress
+  namespace: default
+  annotations:
+    konghq.com/plugins: key-auth
+    konghq.com/strip-path: "true"
+spec:
+  ingressClassName: kong
+  rules:
+    - http:
+        paths:
+          - path: /httpbin
+            pathType: Prefix
+            backend:
+              service:
+                name: httpbin
+                port:
+                  number: 80
