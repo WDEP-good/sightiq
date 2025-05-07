@@ -1,91 +1,117 @@
----
-# 示例服务 Deployment 和 Service（httpbin）
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: httpbin
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: httpbin
-  template:
-    metadata:
-      labels:
-        app: httpbin
-    spec:
-      containers:
-        - name: httpbin
-          image: kong/httpbin
-          ports:
-            - containerPort: 80
----
+# 1. FE (Frontend) Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: httpbin
-  namespace: default
+  name: starrocks-fe-service
 spec:
   ports:
-    - port: 80
-      targetPort: 80
-      protocol: TCP
-      name: http
+    - name: mysql-port
+      port: 9030
+      targetPort: 9030
+    - name: http-port
+      port: 8030
+      targetPort: 8030
+    - name: rpc-port
+      port: 9010
+      targetPort: 9010
   selector:
-    app: httpbin
+    app: starrocks-fe
 ---
-# KongPlugin：API Key 验证
-apiVersion: configuration.konghq.com/v1
-kind: KongPlugin
+# 2. FE StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
-  name: key-auth
-  namespace: default
-config:
-  key_names:
-    - apikey
-  hide_credentials: true
-plugin: key-auth
----
-# KongConsumer：API 用户
-apiVersion: configuration.konghq.com/v1
-kind: KongConsumer
-metadata:
-  name: demo-consumer
-  namespace: default
-username: demo-user
-credentials:
-  - demo-key
----
-# KongCredential：API Key
-apiVersion: configuration.konghq.com/v1
-kind: KongCredential
-metadata:
-  name: demo-key
-  namespace: default
-consumerRef: demo-consumer
-type: key-auth
-config:
-  key: my-secret-api-key
----
-# Ingress 路由，绑定插件
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: httpbin-ingress
-  namespace: default
-  annotations:
-    konghq.com/plugins: key-auth
-    konghq.com/strip-path: "true"
+  name: starrocks-fe
 spec:
-  ingressClassName: kong
-  rules:
-    - http:
-        paths:
-          - path: /httpbin
-            pathType: Prefix
-            backend:
-              service:
-                name: httpbin
-                port:
-                  number: 80
+  serviceName: starrocks-fe-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: starrocks-fe
+  template:
+    metadata:
+      labels:
+        app: starrocks-fe
+    spec:
+      containers:
+        - name: fe
+          image: starrocks/fe-ubuntu:latest
+          imagePullPolicy: IfNotPresent  # 禁止从远程拉取
+          command: ["sleep"]
+          args: ["infinity"]
+          ports:
+            - containerPort: 9030  # MySQL 协议
+            - containerPort: 8030  # Web UI
+            - containerPort: 9010  # 节点间通信
+          env:
+            - name: FE_SERVERS
+              value: "fe1=starrocks-fe-0.starrocks-fe-service:9010"
+          volumeMounts:
+            - name: fe-meta
+              mountPath: /opt/starrocks/fe/meta
+  volumeClaimTemplates:
+    - metadata:
+        name: fe-meta
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: standard
+---
+# 3. BE (Backend) Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: starrocks-be-service
+spec:
+  clusterIP: None  # Headless Service
+  ports:
+    - name: thrift-rpc
+      port: 9060
+      targetPort: 9060
+    - name: web-ui
+      port: 8040
+      targetPort: 8040
+    - name: brpc
+      port: 9050
+      targetPort: 9050
+  selector:
+    app: starrocks-be
+---
+# 4. BE StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: starrocks-be
+spec:
+  serviceName: starrocks-be-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: starrocks-be
+  template:
+    metadata:
+      labels:
+        app: starrocks-be
+    spec:
+      containers:
+        - name: be
+          image: starrocks/be-ubuntu:latest
+          imagePullPolicy: IfNotPresent  # 禁止从远程拉取
+          ports:
+            - containerPort: 9060  # Thrift RPC
+            - containerPort: 8040  # Web UI
+            - containerPort: 9050  # BRPC 通信
+          volumeMounts:
+            - name: be-data
+              mountPath: /opt/starrocks/be/storage
+  volumeClaimTemplates:
+    - metadata:
+        name: be-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: standard
