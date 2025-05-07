@@ -1,5 +1,12 @@
 #! /bin/bash
 
+
+CRI_CONFIG_PATH="/etc/crictl.yaml"
+CONTAINERD_SOCKET="/run/containerd/containerd.sock"
+
+
+
+
 function InitDocker() {
     if ! command -v docker &>/dev/null; then
         echo "Docker 未安装，正在安装 Docker..."
@@ -24,11 +31,39 @@ function InitDocker() {
     fi
 }
 
-
 function InitK8s() {
-    echo "Init k8s"
+    if ! command -v kubectl &>/dev/null; then
+        echo "Kubernetes 未安装，正在安装 Kubernetes..."
+        # 关闭swap
+        sudo swapoff -a
+        # 安装kubeadm
+        echo "安装kubeadm"
+        sudo apt-get update
+        sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+        sudo apt-get update
+        sudo apt-get install -y kubelet kubeadm kubectl
+        sudo apt-mark hold kubelet kubeadm kubectl
+    else
+        echo "Kubernetes 已安装"
+    fi
 }
 
+function InitContainerd() {
+    echo "初始化containerd"
+    if [ ! -f "$CRI_CONFIG_PATH" ]; then
+        echo "配置文件不存在，正在添加配置..."
+        sudo tee "$CRI_CONFIG_PATH" >/dev/null <<EOF
+runtime-endpoint: unix://$CONTAINERD_SOCKET
+image-endpoint: unix://$CONTAINERD_SOCKET
+timeout: 10
+debug: true
+EOF
+    else
+        echo "containerd配置文件已存在，跳过配置"
+    fi
+}
 
 function start_project() {
     echo "Starting project..."
@@ -36,4 +71,5 @@ function start_project() {
 
 InitDocker
 InitK8s
+InitContainerd
 start_project
