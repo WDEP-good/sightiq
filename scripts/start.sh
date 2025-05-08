@@ -17,8 +17,6 @@ function unsetProxy() {
     unset https_proxy
 }
 
-setProxy
-
 function starrK8s() {
     echo "开始启动 Kubernetes 集群..."
     setProxy

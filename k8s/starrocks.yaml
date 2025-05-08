@@ -55,7 +55,7 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 10Gi
+            storage: 1Gi
 ---
 # 3. FE持久化存储PVC
 apiVersion: v1
@@ -67,8 +67,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
-  storageClassName: standard  # 根据你的K8s环境修改（如local-path, gp2等）
+      storage: 1Gi
+  storageClassName: local-path  # 根据你的K8s环境修改（如local-path, gp2等）
 ---
 # 4. BE (Backend) Service
 apiVersion: v1
@@ -118,4 +118,4 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 50Gi  # BE需要
+            storage: 1Gi  # BE需要

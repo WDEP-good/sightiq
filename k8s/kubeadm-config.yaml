@@ -1,0 +1,13 @@
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: 192.168.36.130  # 你的本地 IP 地址
+  bindPort: 6443
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+apiServer:
+  extraArgs:
+    bind-address: "0.0.0.0"  # 监听所有接口
+networking:
+  podSubnet: 192.168.0.0/16  # 根据你选择的 CNI 插件设置这个 CIDR
