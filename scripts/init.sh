@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "初始化脚本开始执行..."
+
+
+
 CRI_CONFIG_PATH="/etc/crictl.yaml"
 CONTAINERD_SOCKET="/run/containerd/containerd.sock"
 
