@@ -14,7 +14,6 @@ function setProxy() {
 [Service]
 Environment="HTTP_PROXY=http://${PROXY_IP}"
 Environment="HTTPS_PROXY=http://${PROXY_IP}"
-# no_proxy 里保留 localhost 和集群内 IP
 Environment="NO_PROXY=127.0.0.1,localhost,10.96.0.0/12,10.244.0.0/16"
 EOF
     sudo systemctl daemon-reload
