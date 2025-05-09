@@ -78,7 +78,7 @@ const validatePass = (_rule: any, value: any, callback: any) => {
     } else {
         if (ruleForm.checkPass !== '') {
             if (!ruleFormRef.value) return
-            ruleFormRef.value.validateField('checkPass', () => null)
+            ruleFormRef.value.validateField('checkPass', () => {})
         }
         callback()
     }
@@ -107,12 +107,11 @@ const rules = reactive<FormRules<typeof ruleForm>>({
 
 const submitForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return
-    formEl.validate((valid) => {
+    formEl.validate(async (valid: boolean) => {
         if (valid) {
             console.log('submit!')
         } else {
             console.log('error submit!')
-            return false
         }
     })
 }

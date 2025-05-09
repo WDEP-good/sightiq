@@ -38,14 +38,10 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
       ]
     },
     server: {
-      // 开启代理
       proxy: {
-        // 环境：'/dev-api'
         [env.VITE_APP_BASE_API]: {
-          // 代理目标'http://localhost:3000'
           target: env.VITE_APP_SERVICE_URL,
-          changeOrigin: true,//允许跨域
-          // 重写url
+          changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },

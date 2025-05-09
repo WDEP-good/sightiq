@@ -42,7 +42,7 @@
             <div class="nologin_footer2">
                 <el-button v-if="current > 0" style="margin-left: 8px" @click="prev">返回上一步</el-button>
                 <el-button type="primary" v-if="current == steps.length - 1"
-                    @click="submitForm(ruleFormRef)">提交</el-button>
+                    @click="submitForm(ruleFormRef!)">提交</el-button>
 
             </div>
             <!-- 底部2 -->
@@ -109,7 +109,7 @@ const validatePass = (_rule: any, value: any, callback: any) => {
     } else {
         if (ruleForm.checkPass !== '') {
             if (!ruleFormRef.value) return
-            ruleFormRef.value.validateField('checkPass', () => null)
+            ruleFormRef.value.validateField('checkPass', () => {})
         }
         callback()
     }
@@ -139,15 +139,14 @@ const rules = reactive<FormRules<typeof ruleForm>>({
     age: [{ validator: checkAge, trigger: 'blur' }],
 })
 
-const submitForm = (formEl: FormInstance | undefined) => {
+const submitForm = (formEl: FormInstance) => {
     if (!formEl) return
-    formEl.validate((valid) => {
+    formEl.validate((valid: boolean) => {
         if (valid) {
             success('注册成功，请输入账号密码登录'); 
             router.back();
         } else {
             console.log('error submit!')
-            return false
         }
     })
 }
