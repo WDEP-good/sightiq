@@ -1,14 +1,14 @@
 <template>
     <HomeBg />
     <div class="home">
-        <Header />
+       
         <Left />
         <Right />
         <Footer />
     </div>
 </template>
 <script setup lang="ts">
-import Header from './components/Header.vue';
+
 import Left from './components/Left.vue';
 import Right from './components/Right.vue';
 import Footer from './components/Footer.vue';

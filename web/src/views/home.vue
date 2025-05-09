@@ -1,7 +1,5 @@
 <template>
-    <LoginBg></LoginBg>
     <div class="inxdexsearch">
-        <Heard></Heard>
         <div class="box">
             <div class="header_text header-item">旅游景区搜索</div>
             <div class="header-item" :style="headerstyle">
@@ -30,10 +28,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import LoginBg from '@/components/loginBg.vue';
-import Heard from '@/views/Home/components/Header.vue'
 import { reactive, ref, onMounted, onUnmounted } from 'vue';
-import YoYou from './compents/youyou.vue'
 
 const value = ref<string>('');
 const searchId = ref(0)
@@ -106,19 +101,12 @@ const handleClick = (id: number) => {
 
 <style scoped lang="less">
 .inxdexsearch {
-    position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
+    position: relative;
 
-    .header {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        position: relative;
-        top: 0;
-    }
 
 
     .box {

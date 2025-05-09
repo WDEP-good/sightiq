@@ -1,13 +1,16 @@
 let routes = [
   {
     path: "/",
-    name: "index",
-    component: () => import("@/views/Search/indexSearch.vue"),
-  },
-  {
-    path: "/home",
-    name: "home",
-    component: () => import("@/views/Home/home.vue"),
+    name: "Root",
+    redirect: "/home",
+    component: () => import("@/layout/index.vue"),
+    children: [
+      {
+        path: "home",
+        name: "home",
+        component: () => import("@/views/home.vue"),
+      },
+    ],
   },
   {
     path: "/Login",
@@ -18,11 +21,6 @@ let routes = [
     path: "/nologin",
     name: "nologin",
     component: () => import("@/views/no_login.vue"),
-  },
-  {
-    path: "/search",
-    name: "search",
-    component: () => import("@/views/Search/indexSearch.vue"),
   },
   {
     path: "/city",
