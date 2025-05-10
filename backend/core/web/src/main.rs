@@ -1,6 +1,4 @@
-mod server; 
-
-use server::api::rocket; 
+include!("D:\\Project\\sightiq\\backend\\core\\web\\server\\mod.rs");
 
 #[macro_use]
 extern crate rocket;

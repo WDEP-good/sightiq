@@ -1,14 +1,10 @@
-
-
 use rocket::form::Form;
-use serde_json::json;
-mod api; 
 
-// #[derive(FromForm)]
-// struct LoginForm {
-//     username: String,
-//     password: String,
-// }
+#[derive(FromForm)]
+struct LoginForm {
+    username: String,
+    password: String,
+}
 
 #[derive(Responder)]
 #[response(status = 200, content_type = "json")]
@@ -16,6 +12,7 @@ struct RawSuccessJson(&'static str);
 
 #[post("/login", data = "<form>")]
 fn login(form: Form<LoginForm>) -> RawSuccessJson {
+    let _username = form.username.clone();
     RawSuccessJson("{ \"message\": \"Login successful\" }")
 }
 
@@ -31,6 +28,5 @@ pub fn rocket() -> rocket::Rocket<rocket::Build> {
             port: 3000,
             ..Default::default()
         })
-        .mount("/", routes![index])
-        .mount("/login", routes![login])
+        .mount("/", routes![index,login])
 }

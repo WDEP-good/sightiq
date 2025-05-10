@@ -1,10 +1,11 @@
 [package]
-name = "web"
+name = "backend"
 version = "0.1.0"
 edition = "2021"
 
 
 [dependencies]
+tokio = { version = "1.36.0", features = ["full"] }
 rocket = "0.5.1"
 serde_json = "1.0"
 
