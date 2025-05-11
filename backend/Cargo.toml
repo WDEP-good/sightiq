@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["core/web"]
+members = ["core"]
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(nightly)'] }
