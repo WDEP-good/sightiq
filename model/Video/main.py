@@ -1,27 +1,20 @@
-import cv2
 from ultralytics import YOLO
 
-model = YOLO("yolov8n.pt")  # 使用 nano 模型，更轻便
+# 从头创建一个新的 YOLO 模型
+model = YOLO("yolov8n.yaml")
 
-cap = cv2.VideoCapture("video.mp4")  # 或者 0 表示摄像头
+# 加载一个预训练的 YOLO 模型（推荐用于训练）
+model = YOLO("yolov8n.pt")
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+# 使用 'coco8.yaml' 数据集训练模型 3 个周期
+results = model.train(data="coco8.yaml", epochs=3)
 
-    results = model(frame)
-    annotated_frame = results[0].plot()
+# 在验证集上评估模型性能
+results = model.val()
 
-    # 统计人类目标
-    people_count = sum(1 for r in results[0].boxes.cls if int(r) == 0)  # 0 是 'person' 类别
+# 使用模型对图像进行目标检测
+results = model("https://ultralytics.com/images/bus.jpg")
 
-    cv2.putText(annotated_frame, f'People: {people_count}', (20, 40),
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    cv2.imshow("YOLOv8n Human Count", annotated_frame)
+# 将模型导出为 ONNX 格式
+success = model.export(format="onnx")
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
