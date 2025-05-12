@@ -31,14 +31,17 @@ function unsetProxy() {
 }
 
 function starrK8s() {
+    sudo kubeadm reset -f
+    sudo systemctl stop kubelet
+    sudo rm -rf /etc/kubernetes/*
+    sudo rm -rf /var/lib/etcd
+    sudo rm -rf ~/.kube
     echo "开始启动 Kubernetes 集群..."
     setProxy
-    sudo kubeadm config images pull
+    sudo kubeadm config images pull --v=5
     unsetProxy
-    # 初始化集群
     echo "初始化集群..."
-    sudo kubeadm init --pod-network-cidr=10.244.0.0/16
-    # 配置 kubectl
+    sudo kubeadm init --config ../k8s/kubeadm-config.yaml
     echo "配置 kubectl..."
     mkdir -p $HOME/.kube
     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
