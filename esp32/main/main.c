@@ -1,9 +1,9 @@
 #include "esp_camera.h"
 #include <WiFi.h>
 #include <WebServer.h>
+#include "camera_pins.h"   // ESP32 Camera 引脚配置
 
 #define CAMERA_MODEL_AI_THINKER // 如果你使用的是 ESP32-CAM
-#include "camera_pins.h"        // ESP32 Camera 引脚配置
 WebServer server(80);
 
 void startCameraServer()
