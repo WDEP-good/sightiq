@@ -264,9 +264,15 @@ spec:
         volumeMounts:
         - name: sentinel-config
           mountPath: /usr/local/etc/redis
+          readOnly: true
         - name: sentinel-data
           mountPath: /data
-        command: ["redis-server", "/usr/local/etc/redis/sentinel.conf", "--sentinel"]
+        command:
+        - sh
+        - -c
+        - |
+          cp /usr/local/etc/redis/sentinel.conf /data/sentinel.conf && \
+            redis-server /data/sentinel.conf --sentinel
       volumes:
       - name: sentinel-config
         configMap:
@@ -290,16 +296,13 @@ metadata:
 data:
   sentinel.conf: |
     port 26379
-    dir /data
-    sentinel monitor redis-master redis-master 6379 2
+    dir /tmp
+    sentinel monitor redis-master redis-master.redis.svc.cluster.local 6379 2
     sentinel down-after-milliseconds redis-master 5000
     sentinel failover-timeout redis-master 10000
     sentinel parallel-syncs redis-master 1
     sentinel resolve-hostnames yes
     sentinel auth-pass redis-master 123456
-    sentinel announce-ip redis-sentinel1.redis-sentinel1.redis.svc.cluster.local
-    sentinel announce-port 26379
-
 ---
 # Sentinel 1 Service (Headless)
 apiVersion: v1
@@ -347,7 +350,12 @@ spec:
           mountPath: /usr/local/etc/redis
         - name: sentinel-data
           mountPath: /data
-        command: ["redis-server", "/usr/local/etc/redis/sentinel.conf", "--sentinel"]
+        command:
+        - sh
+        - -c
+        - |
+          cp /usr/local/etc/redis/sentinel.conf /data/sentinel.conf && \
+          redis-server /data/sentinel.conf --sentinel
       volumes:
       - name: sentinel-config
         configMap:
@@ -370,17 +378,12 @@ metadata:
   namespace: redis
 data:
   sentinel.conf: |
-    port 26379
-    dir /data
-    sentinel monitor redis-master redis-master 6379 2
+    dir /tmp
     sentinel down-after-milliseconds redis-master 5000
-    sentinel failover-timeout redis-master 10000
-    sentinel parallel-syncs redis-master 1
+    port 26380
     sentinel resolve-hostnames yes
-    sentinel auth-pass redis-master 123456
-    sentinel announce-ip redis-sentinel2.redis-sentinel2.redis.svc.cluster.local
-    sentinel announce-port 26379
-
+    sentinel monitor redis-master redis-master 6379 2
+    sentinel failover-timeout redis-master 10000
 ---
 # Sentinel 2 Service
 apiVersion: v1
@@ -428,7 +431,12 @@ spec:
           mountPath: /usr/local/etc/redis
         - name: sentinel-data
           mountPath: /data
-        command: ["redis-server", "/usr/local/etc/redis/sentinel.conf", "--sentinel"]
+        command:
+        - sh
+        - -c
+        - |
+          cp /usr/local/etc/redis/sentinel.conf /data/sentinel.conf && \
+          redis-server /data/sentinel.conf --sentinel
       volumes:
       - name: sentinel-config
         configMap:
@@ -451,16 +459,13 @@ metadata:
   namespace: redis
 data:
   sentinel.conf: |
-    port 26379
-    dir /data
+    port 26381
+    dir /tmp
     sentinel monitor redis-master redis-master 6379 2
     sentinel down-after-milliseconds redis-master 5000
     sentinel failover-timeout redis-master 10000
     sentinel parallel-syncs redis-master 1
     sentinel resolve-hostnames yes
-    sentinel auth-pass redis-master 123456
-    sentinel announce-ip redis-sentinel3.redis-sentinel3.redis.svc.cluster.local
-    sentinel announce-port 26379
 
 ---
 # Sentinel 3 Service
