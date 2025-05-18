@@ -1,10 +1,14 @@
-# starrocks.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: starrocks
 ---
-# 1. FE (Frontend) Service
+# 1. FE Service
 apiVersion: v1
 kind: Service
 metadata:
   name: starrocks-fe-service
+  namespace: starrocks
 spec:
   ports:
     - name: mysql-port
@@ -13,14 +17,18 @@ spec:
     - name: http-port
       port: 8030
       targetPort: 8030
+    - name: rpc-port
+      port: 9010
+      targetPort: 9010
   selector:
     app: starrocks-fe
 ---
-# 2. FE StatefulSet (单节点，生产建议3节点)
+# 2. FE StatefulSet
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: starrocks-fe
+  namespace: starrocks
 spec:
   serviceName: starrocks-fe-service
   replicas: 1
@@ -34,20 +42,22 @@ spec:
     spec:
       containers:
         - name: fe
-          image: starrocks/fe-ubuntu:latest
+          image: starrocks/fe-ubuntu:3.3.14
+          imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 9030  # MySQL协议端口
-            - containerPort: 8030  # HTTP端口
+            - containerPort: 9030  # MySQL port
+            - containerPort: 8030  # HTTP port
+            - containerPort: 9010  # RPC port
           env:
             - name: FE_SERVERS
               value: "fe1=starrocks-fe-0.starrocks-fe-service:9010"
+            - name: FE_ID
+              value: "1"
+            - name: FE_ROLE
+              value: "leader"
           volumeMounts:
             - name: fe-meta
               mountPath: /opt/starrocks/fe/meta
-      volumes:
-        - name: fe-meta
-          persistentVolumeClaim:
-            claimName: fe-meta-pvc
   volumeClaimTemplates:
     - metadata:
         name: fe-meta
@@ -56,38 +66,29 @@ spec:
         resources:
           requests:
             storage: 1Gi
+        storageClassName: local-path
 ---
-# 3. FE持久化存储PVC
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: fe-meta-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: local-path  # 根据你的K8s环境修改（如local-path, gp2等）
----
-# 4. BE (Backend) Service
+# 3. BE Service
 apiVersion: v1
 kind: Service
 metadata:
   name: starrocks-be-service
+  namespace: starrocks
 spec:
-  clusterIP: None  # Headless Service
+  clusterIP: None  # Headless service
   ports:
-    - port: 9060
+    - name: be-port
+      port: 9060
       targetPort: 9060
   selector:
     app: starrocks-be
 ---
-# 5. BE StatefulSet
+# 4. BE StatefulSet
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: starrocks-be
+  namespace: starrocks
 spec:
   serviceName: starrocks-be-service
   replicas: 1
@@ -101,16 +102,16 @@ spec:
     spec:
       containers:
         - name: be
-          image: starrocks/be-ubuntu:latest
+          image: starrocks/be-ubuntu:3.3.14
+          imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 9060  # BE服务端口
+            - containerPort: 9060
+          env:
+            - name: FE_SERVERS
+              value: "starrocks-fe-0.starrocks-fe-service:9010"
           volumeMounts:
             - name: be-data
               mountPath: /opt/starrocks/be/storage
-      volumes:
-        - name: be-data
-          persistentVolumeClaim:
-            claimName: be-data-pvc
   volumeClaimTemplates:
     - metadata:
         name: be-data
@@ -118,4 +119,33 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 1Gi  # BE需要
+            storage: 1Gi
+        storageClassName: local-path
+---
+# 5. FE PVC（备用，可提前创建）
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fe-meta-pvc
+  namespace: starrocks
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+---
+# 6. BE PVC（备用，可提前创建）
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: be-data-pvc
+  namespace: starrocks
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path

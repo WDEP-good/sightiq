@@ -1,8 +1,17 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis
+
+---
+# Redis Master StatefulSet
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis-master
+  namespace: redis
 spec:
+  serviceName: redis-master
   replicas: 1
   selector:
     matchLabels:
@@ -16,35 +25,53 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:latest
+        image: docker.io/library/redis:7.2.4
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
         volumeMounts:
         - name: redis-config
           mountPath: /usr/local/etc/redis
+        - name: redis-data
+          mountPath: /data
         command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
       volumes:
       - name: redis-config
         configMap:
           name: redis-master-config
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
 
 ---
+# Redis Master ConfigMap (保持不变)
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-master-config
+  namespace: redis
 data:
   redis.conf: |
     bind 0.0.0.0
     protected-mode no
     appendonly yes
+    requirepass 123456
+    user root on >123456 ~* +@all
 
 ---
+# Redis Master Service (改为Headless Service)
 apiVersion: v1
 kind: Service
 metadata:
   name: redis-master
+  namespace: redis
 spec:
+  clusterIP: None
   ports:
   - port: 6379
     targetPort: 6379
@@ -53,11 +80,14 @@ spec:
     role: master
 
 ---
+# Redis Slave 1 StatefulSet
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis-slave1
+  namespace: redis
 spec:
+  serviceName: redis-slave1
   replicas: 1
   selector:
     matchLabels:
@@ -71,36 +101,55 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:latest
+        image: docker.io/library/redis:7.2.4
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
         volumeMounts:
         - name: redis-config
           mountPath: /usr/local/etc/redis
+        - name: redis-data
+          mountPath: /data
         command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
       volumes:
       - name: redis-config
         configMap:
           name: redis-slave1-config
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
 
 ---
+# Redis Slave 1 ConfigMap (保持不变)
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-slave1-config
+  namespace: redis
 data:
   redis.conf: |
     bind 0.0.0.0
     protected-mode no
     appendonly yes
     replicaof redis-master 6379
+    masterauth 123456
+    requirepass 123456
+    user root on >123456 ~* +@all
 
 ---
+# Redis Slave 1 Service (Headless)
 apiVersion: v1
 kind: Service
 metadata:
   name: redis-slave1
+  namespace: redis
 spec:
+  clusterIP: None
   ports:
   - port: 6379
     targetPort: 6379
@@ -109,11 +158,14 @@ spec:
     role: slave1
 
 ---
+# Redis Slave 2 StatefulSet
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis-slave2
+  namespace: redis
 spec:
+  serviceName: redis-slave2
   replicas: 1
   selector:
     matchLabels:
@@ -127,36 +179,55 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:latest
+        image: docker.io/library/redis:7.2.4
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
         volumeMounts:
         - name: redis-config
           mountPath: /usr/local/etc/redis
+        - name: redis-data
+          mountPath: /data
         command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
       volumes:
       - name: redis-config
         configMap:
           name: redis-slave2-config
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
 
 ---
+# Redis Slave 2 ConfigMap (保持不变)
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-slave2-config
+  namespace: redis
 data:
   redis.conf: |
     bind 0.0.0.0
     protected-mode no
     appendonly yes
     replicaof redis-master 6379
+    masterauth 123456
+    requirepass 123456
+    user root on >123456 ~* +@all
 
 ---
+# Redis Slave 2 Service (Headless)
 apiVersion: v1
 kind: Service
 metadata:
   name: redis-slave2
+  namespace: redis
 spec:
+  clusterIP: None
   ports:
   - port: 6379
     targetPort: 6379
@@ -165,177 +236,95 @@ spec:
     role: slave2
 
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-sentinel1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: redis
-      role: sentinel1
-  template:
-    metadata:
-      labels:
-        app: redis
-        role: sentinel1
-    spec:
-      containers:
-      - name: redis
-        image: redis:latest
-        ports:
-        - containerPort: 26379
-        volumeMounts:
-        - name: redis-config
-          mountPath: /usr/local/etc/redis
-        command: ["redis-server", "/usr/local/etc/redis/sentinel.conf", "--sentinel"]
-      volumes:
-      - name: redis-config
-        configMap:
-          name: redis-sentinel1-config
-
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: redis-sentinel1-config
+  name: redis-sentinel-config
+  namespace: redis
 data:
-  sentinel.conf: |
+  sentinel-template.conf: |
     port 26379
-    dir /tmp
-    sentinel monitor redis-master redis-master 6379 2
+    dir /data
+    sentinel monitor redis-master redis-master.redis.svc.cluster.local 6379 2
     sentinel down-after-milliseconds redis-master 5000
     sentinel failover-timeout redis-master 10000
     sentinel parallel-syncs redis-master 1
     sentinel resolve-hostnames yes
+    sentinel auth-pass redis-master 123456
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-sentinel1
+  name: redis-sentinel
+  namespace: redis
 spec:
+  clusterIP: None  # Headless service
   ports:
-  - port: 26379
+  - name: sentinel
+    port: 26379
     targetPort: 26379
   selector:
     app: redis
-    role: sentinel1
+    role: sentinel
 
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: redis-sentinel2
+  name: redis-sentinel
+  namespace: redis
 spec:
-  replicas: 1
+  serviceName: redis-sentinel
+  replicas: 3
   selector:
     matchLabels:
       app: redis
-      role: sentinel2
+      role: sentinel
   template:
     metadata:
       labels:
         app: redis
-        role: sentinel2
+        role: sentinel
     spec:
       containers:
-      - name: redis
-        image: redis:latest
+      - name: sentinel
+        image: redis:7.2.4
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 26379
         volumeMounts:
-        - name: redis-config
-          mountPath: /usr/local/etc/redis
-        command: ["redis-server", "/usr/local/etc/redis/sentinel.conf", "--sentinel"]
+        - name: config-volume
+          mountPath: /etc/redis
+        - name: data
+          mountPath: /data
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        command:
+        - sh
+        - -c
+        - |
+          cp /etc/redis/sentinel-template.conf /data/sentinel.conf && \
+          for i in 0 1 2; do \
+          if [ "$HOSTNAME" != "redis-sentinel-$i" ]; then \
+            echo "sentinel known-sentinel redis-master redis-sentinel-$i.redis-sentinel.redis.svc.cluster.local 26379" >> /data/sentinel.conf; \
+          fi; \
+          done && \
+          cat /data/sentinel.conf && \
+          redis-server /data/sentinel.conf --sentinel
+
       volumes:
-      - name: redis-config
+      - name: config-volume
         configMap:
-          name: redis-sentinel2-config
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: redis-sentinel2-config
-data:
-  sentinel.conf: |
-    port 26380
-    dir /tmp
-    sentinel monitor redis-master redis-master 6379 2
-    sentinel down-after-milliseconds redis-master 5000
-    sentinel failover-timeout redis-master 10000
-    sentinel resolve-hostnames yes
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-sentinel2
-spec:
-  ports:
-  - port: 26380
-    targetPort: 26379
-  selector:
-    app: redis
-    role: sentinel2
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-sentinel3
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: redis
-      role: sentinel3
-  template:
-    metadata:
-      labels:
-        app: redis
-        role: sentinel3
+          name: redis-sentinel-config
+  volumeClaimTemplates:
+  - metadata:
+      name: data
     spec:
-      containers:
-      - name: redis
-        image: redis:latest
-        ports:
-        - containerPort: 26379
-        volumeMounts:
-        - name: redis-config
-          mountPath: /usr/local/etc/redis
-        command: ["redis-server", "/usr/local/etc/redis/sentinel.conf", "--sentinel"]
-      volumes:
-      - name: redis-config
-        configMap:
-          name: redis-sentinel3-config
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: redis-sentinel3-config
-data:
-  sentinel.conf: |
-    port 26381
-    dir /tmp
-    sentinel monitor redis-master redis-master 6379 2
-    sentinel down-after-milliseconds redis-master 5000
-    sentinel failover-timeout redis-master 10000
-    sentinel parallel-syncs redis-master 1
-    sentinel resolve-hostnames yes
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-sentinel3
-spec:
-  ports:
-  - port: 26381
-    targetPort: 26379
-  selector:
-    app: redis
-    role: sentinel3
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

@@ -5,7 +5,6 @@ import '@/assets/style/index.less'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import DataVVue3 from '@kjgl77/datav-vue3'
-// 引入Jquery
 import ICon from 'ant-design-vue/es/icon/index';
 import Antd from "ant-design-vue/lib/index";
 import "/node_modules/ant-design-vue/dist/reset.css";
