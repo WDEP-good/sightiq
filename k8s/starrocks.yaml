@@ -9,7 +9,10 @@ kind: Service
 metadata:
   name: starrocks-fe-service
   namespace: starrocks
+  labels:
+    app: starrocks-fe
 spec:
+  type: ClusterIP
   ports:
     - name: mysql-port
       port: 9030
@@ -29,6 +32,8 @@ kind: StatefulSet
 metadata:
   name: starrocks-fe
   namespace: starrocks
+  labels:
+    app: starrocks-fe
 spec:
   serviceName: starrocks-fe-service
   replicas: 1
@@ -40,33 +45,70 @@ spec:
       labels:
         app: starrocks-fe
     spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
       containers:
         - name: fe
-          image: starrocks/fe-ubuntu:3.3.14
+          image: docker.io/starrocks/fe-ubuntu:3.3.14
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 9030  # MySQL port
-            - containerPort: 8030  # HTTP port
-            - containerPort: 9010  # RPC port
+            - containerPort: 9030
+            - containerPort: 8030
+            - containerPort: 9010
           env:
             - name: FE_SERVERS
-              value: "fe1=starrocks-fe-0.starrocks-fe-service:9010"
+              value: "fe1=starrocks-fe-0.starrocks-fe-service.starrocks.svc.cluster.local:9010"
             - name: FE_ID
               value: "1"
             - name: FE_ROLE
-              value: "leader"
+              value: "LEADER"
+            - name: JAVA_OPTS
+              value: "-Xmx512m -Xms512m"
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
           volumeMounts:
             - name: fe-meta
               mountPath: /opt/starrocks/fe/meta
+            - name: fe-log
+              mountPath: /opt/starrocks/fe/log
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8030
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8030
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
   volumeClaimTemplates:
     - metadata:
         name: fe-meta
       spec:
         accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
         resources:
           requests:
             storage: 1Gi
+    - metadata:
+        name: fe-log
+      spec:
+        accessModes: ["ReadWriteOnce"]
         storageClassName: local-path
+        resources:
+          requests:
+            storage: 512Mi
 ---
 # 3. BE Service
 apiVersion: v1
@@ -74,12 +116,23 @@ kind: Service
 metadata:
   name: starrocks-be-service
   namespace: starrocks
+  labels:
+    app: starrocks-be
 spec:
-  clusterIP: None  # Headless service
+  clusterIP: None
   ports:
     - name: be-port
       port: 9060
       targetPort: 9060
+    - name: webserver-port
+      port: 8040
+      targetPort: 8040
+    - name: heartbeat-port
+      port: 9050
+      targetPort: 9050
+    - name: brpc-port
+      port: 8060
+      targetPort: 8060
   selector:
     app: starrocks-be
 ---
@@ -89,6 +142,8 @@ kind: StatefulSet
 metadata:
   name: starrocks-be
   namespace: starrocks
+  labels:
+    app: starrocks-be
 spec:
   serviceName: starrocks-be-service
   replicas: 1
@@ -100,52 +155,72 @@ spec:
       labels:
         app: starrocks-be
     spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
       containers:
         - name: be
-          image: starrocks/be-ubuntu:3.3.14
+          image: docker.io/starrocks/be-ubuntu:3.3.14
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9060
+            - containerPort: 8040
+            - containerPort: 9050
+            - containerPort: 8060
           env:
             - name: FE_SERVERS
-              value: "starrocks-fe-0.starrocks-fe-service:9010"
+              value: "fe1=starrocks-fe-0.starrocks-fe-service.starrocks.svc.cluster.local:9010"
+            - name: BE_PORT
+              value: "9060"
+            - name: WEBSERVER_PORT
+              value: "8040"
+            - name: HEARTBEAT_SERVICE_PORT
+              value: "9050"
+            - name: BRPC_PORT
+              value: "8060"
+            - name: JAVA_OPTS
+              value: "-Xmx1g -Xms1g"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
           volumeMounts:
             - name: be-data
               mountPath: /opt/starrocks/be/storage
+            - name: be-log
+              mountPath: /opt/starrocks/be/log
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8040
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8040
+            initialDelaySeconds: 90
+            periodSeconds: 20
+            failureThreshold: 5
   volumeClaimTemplates:
     - metadata:
         name: be-data
       spec:
         accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 5Gi
+    - metadata:
+        name: be-log
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
         resources:
           requests:
             storage: 1Gi
-        storageClassName: local-path
----
-# 5. FE PVC（备用，可提前创建）
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: fe-meta-pvc
-  namespace: starrocks
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: local-path
----
-# 6. BE PVC（备用，可提前创建）
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: be-data-pvc
-  namespace: starrocks
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: local-path
