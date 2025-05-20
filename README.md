@@ -5,8 +5,6 @@
 [![star](https://gitee.com/wdep/sightiq/badge/star.svg?theme=dark)](https://gitee.com/wdep/sightiq/stargazers)
 [![fork](https://gitee.com/wdep/sightiq/badge/fork.svg?theme=dark)](https://gitee.com/wdep/sightiq/members)
 
-## SightIQ 介绍
-
 <div align="center">
 <img width="900px" src="./logo.png"></img>
 </div>
