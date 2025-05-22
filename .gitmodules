@@ -7,3 +7,6 @@
 [submodule "backend"]
 	path = backend
 	url = https://gitee.com/wdep/SightIQ-backend.git
+[submodule "camera"]
+	path = camera
+	url = https://gitee.com/wdep/sightiq-camera.git
