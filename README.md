@@ -6,7 +6,7 @@
 [![fork](https://gitee.com/wdep/sightiq/badge/fork.svg?theme=dark)](https://gitee.com/wdep/sightiq/members)
 
 <div align="center">
-<img width="900px" src="./logo.png"></img>
+<img width="900px" src="./logo.svg"></img>
 </div>
 </div>
  
