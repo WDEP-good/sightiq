@@ -49,3 +49,12 @@
 
 # 项目整体结构
 ![项目结构](images/project-Flow.svg)
+
+# 快速上手
+```
+git clone --recurse-submodules https://gitee.com/wdep/sightiq.git
+
+cd sightiq/scripts
+
+bash start.sh
+```
