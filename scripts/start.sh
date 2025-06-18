@@ -2,9 +2,11 @@
 
 echo "开始启动项目..."
 
-export PROXY_IP=$1
+export PROXY_IP=${1:-}  # 允许空代理设置
 
 function setProxy() {
+    # 关闭swap分区
+    sudo swapoff -a
     echo "设置代理..."
     export http_proxy=http://${PROXY_IP}
     export https_proxy=http://${PROXY_IP}
@@ -31,6 +33,10 @@ function unsetProxy() {
 }
 
 function starrK8s() {
+    # 检查时间
+    date
+    sudo timedatectl set-ntp true
+    echo 'KUBELET_KUBEADM_ARGS=""' > /var/lib/kubelet/kubeadm-flags.env
     sudo kubeadm reset -f
     sudo systemctl stop kubelet
     sudo rm -rf /etc/kubernetes/*
@@ -38,15 +44,22 @@ function starrK8s() {
     sudo rm -rf ~/.kube
     echo "开始启动 Kubernetes 集群..."
     setProxy
-    sudo kubeadm config images pull --v=5
+    sudo kubeadm config images pull --config=init-config.yaml --v=5
+    sudo crictl pull ghcr.io/flannel-io/flannel:v0.27.0
+    sudo crictl pull ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1
+    sudo crictl pull docker.io/flannel/flannel-cni-plugin:v1.1.2
+    sudo crictl pull docker.io/flannel/flannel-cni-plugin:v1.1.2
     unsetProxy
     echo "初始化集群..."
-    sudo kubeadm init --config ../k8s/kubeadm-config.yaml
+    export MASTER_IP=192.168.10.140
+    sudo kubeadm init --config init-config.yaml --v=5
     echo "配置 kubectl..."
     mkdir -p $HOME/.kube
     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
     sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
+    # 禁用 CoreDNS 的内存限制(暂时方案)
+    kubectl patch deployment -n kube-system coredns -p '{"spec":{"template":{"spec":{"containers":[{"name":"coredns","resources":null}]}}}}'
+    kubectl apply -f kube-flannel.yaml
 }
 
 starrK8s
