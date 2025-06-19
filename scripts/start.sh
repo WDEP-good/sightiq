@@ -37,6 +37,11 @@ function starrK8s() {
     date
     sudo timedatectl set-ntp true
     echo 'KUBELET_KUBEADM_ARGS=""' > /var/lib/kubelet/kubeadm-flags.env
+    kubectl delete pvc --all --all-namespaces
+    kubectl delete pv --all
+    kubectl delete ns starrocks local-path-storage
+    sudo ip link delete cni0
+    sudo ip link delete flannel.1
     sudo kubeadm reset -f
     sudo systemctl stop kubelet
     sudo rm -rf /etc/kubernetes/*
@@ -57,9 +62,14 @@ function starrK8s() {
     mkdir -p $HOME/.kube
     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
     sudo chown $(id -u):$(id -g) $HOME/.kube/config
-    # 禁用 CoreDNS 的内存限制(暂时方案)
+    # 禁用 CoreDNS 的内存限制
     kubectl patch deployment -n kube-system coredns -p '{"spec":{"template":{"spec":{"containers":[{"name":"coredns","resources":null}]}}}}'
     kubectl apply -f kube-flannel.yaml
+    kubectl rollout status -n kube-system daemonset/kube-flannel --timeout=120s
+    # 创建默认PVC
+    kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+    kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 }
 
 starrK8s
+ 
