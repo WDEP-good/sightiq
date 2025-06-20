@@ -4,34 +4,6 @@ echo "开始启动项目..."
 
 export PROXY_IP=${1:-}  # 允许空代理设置
 
-function setProxy() {
-    # 关闭swap分区
-    sudo swapoff -a
-    echo "设置代理..."
-    export http_proxy=http://${PROXY_IP}
-    export https_proxy=http://${PROXY_IP}
-
-    sudo mkdir -p /etc/systemd/system/containerd.service.d
-    cat <<EOF | sudo tee /etc/systemd/system/containerd.service.d/http-proxy.conf
-[Service]
-Environment="HTTP_PROXY=http://${PROXY_IP}"
-Environment="HTTPS_PROXY=http://${PROXY_IP}"
-Environment="NO_PROXY=127.0.0.1,localhost,10.96.0.0/12,10.244.0.0/16"
-EOF
-    sudo systemctl daemon-reload
-    sudo systemctl restart containerd
-
-}
-
-function unsetProxy() {
-    echo "取消代理..."
-    unset http_proxy
-    unset https_proxy
-    sudo rm /etc/systemd/system/containerd.service.d/http-proxy.conf
-    sudo systemctl daemon-reload
-    sudo systemctl restart containerd
-}
-
 function starrK8s() {
     # 检查时间
     date
@@ -48,13 +20,9 @@ function starrK8s() {
     sudo rm -rf /var/lib/etcd
     sudo rm -rf ~/.kube
     echo "开始启动 Kubernetes 集群..."
-    setProxy
+    bash scripts/utils/container_proxy_pull.sh containerd ${PROXY_IP} true ghcr.io/flannel-io/flannel:v0.27.0 ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1 docker.io/flannel/flannel-cni-plugin:v1.1.2 docker.io/flannel/flannel-cni-plugin:v1.1.2
     sudo kubeadm config images pull --config=init-config.yaml --v=5
-    sudo crictl pull ghcr.io/flannel-io/flannel:v0.27.0
-    sudo crictl pull ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1
-    sudo crictl pull docker.io/flannel/flannel-cni-plugin:v1.1.2
-    sudo crictl pull docker.io/flannel/flannel-cni-plugin:v1.1.2
-    unsetProxy
+    bash scripts/utils/container_proxy_pull.sh containerd ${PROXY_IP} false
     echo "初始化集群..."
     export MASTER_IP=192.168.10.140
     sudo kubeadm init --config init-config.yaml --v=5
@@ -72,4 +40,3 @@ function starrK8s() {
 }
 
 starrK8s
- 
