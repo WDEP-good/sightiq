@@ -17,7 +17,7 @@ function starrocks() {
 
 
 
-function start_project() {
+function start_sightiq() {
     init_env
     k8s
     redis
