@@ -1,4 +1,4 @@
-# This manifest deploys a StarRocks cluster with 3 FEs, 3 BEs.
+# 此配置文件部署一个包含3个FE和3个BE的StarRocks集群。
 
 apiVersion: starrocks.com/v1
 kind: StarRocksCluster
@@ -8,46 +8,46 @@ metadata:
 spec:
   starRocksFeSpec:
     image: docker.io/starrocks/fe-ubuntu:3.5.0
-    replicas: 1
-    # If you just want to start a running StarRocks cluster, you can set a smaller request/limit, such as 1 core and 2GB.
-    # See https://docs.starrocks.io/docs/deployment/plan_cluster/#cpu-and-memory for more information about how to configure CPU and memory in production.
+    replicas: 2
+    # 如果您只是想启动一个运行中的StarRocks集群，可以设置较小的请求/限制，例如1核和2GB。
+    # 有关如何在生产环境中配置CPU和内存的更多信息，请参见 https://docs.starrocks.io/docs/deployment/plan_cluster/#cpu-and-memory
     limits:
-      cpu: 2
-      memory: 4Gi
+      cpu: 1
+      memory: 2Gi
     requests:
-      cpu: 2
-      memory: 4Gi
-    # storageVolumes is optional. If you don't specify it, emptyDir will be used to store FE meta and log, and be aware
-    # that the files and directories written to the volume will be completely lost upon container restarting.
+      cpu: 1
+      memory: 2Gi
+    # storageVolumes是可选的。如果不指定，将使用emptyDir来存储FE元数据和日志，请注意
+    # 写入卷的文件和目录在容器重启时将完全丢失。
     storageVolumes:
     - name: fe-meta
-      # storageClassName: ""  # If storageClassName is not set, Kubernetes will use the default storage class.
-      # fe container stop running if the disk free space which the fe meta directory residents, is less than 5Gi.
+      # storageClassName: ""  # 如果未设置storageClassName，Kubernetes将使用默认存储类。
+      # 如果FE元数据目录所在磁盘的可用空间小于5Gi，FE容器将停止运行。
       storageSize: 10Gi
       mountPath: /opt/starrocks/fe/meta
     - name: fe-log
-      # storageClassName: ""  # If storageClassName is not set, Kubernetes will use the default storage class.
-      storageSize: 2Gi
+      # storageClassName: ""  # 如果未设置storageClassName，Kubernetes将使用默认存储类。
+      storageSize: 1Gi
       mountPath: /opt/starrocks/fe/log
   starRocksBeSpec:
     image: docker.io/starrocks/be-ubuntu:3.5.0
-    replicas: 1
-    # If you just want to start a running StarRocks cluster, you can set a smaller request/limit, such as 1 core and 2GB.
-    # See https://docs.starrocks.io/docs/deployment/plan_cluster/#cpu-and-memory for more information about how to configure CPU and memory in production.
+    replicas: 2
+    # 如果您只是想启动一个运行中的StarRocks集群，可以设置较小的请求/限制，例如1核和2GB。
+    # 有关如何在生产环境中配置CPU和内存的更多信息，请参见 https://docs.starrocks.io/docs/deployment/plan_cluster/#cpu-and-memory
     limits:
-      cpu: 2
-      memory: 4Gi
+      cpu: 1
+      memory: 2Gi
     requests:
-      cpu: 2
-      memory: 4Gi
-    # storageVolumes is optional. If you don't specify it, emptyDir will be used to store BE data and log, and be aware
-    # that the files and directories written to the volume will be completely lost upon container restarting.
+      cpu: 1
+      memory: 2Gi
+    # storageVolumes是可选的。如果不指定，将使用emptyDir来存储BE数据和日志，请注意
+    # 写入卷的文件和目录在容器重启时将完全丢失。
     storageVolumes:
     - name: be-data
-      # storageClassName: ""  # If storageClassName is not set, Kubernetes will use the default storage class.
+      # storageClassName: ""  # 如果未设置storageClassName，Kubernetes将使用默认存储类。
       storageSize: 20Gi
       mountPath: /opt/starrocks/be/storage
     - name: be-log
-      # storageClassName: ""  # If storageClassName is not set, Kubernetes will use the default storage class.
-      storageSize: 1Gi
+      # storageClassName: ""  # 如果未设置storageClassName，Kubernetes将使用默认存储类。
+      storageSize: 2Gi
       mountPath: /opt/starrocks/be/log

@@ -48,13 +48,10 @@ function check_node_env() {
 function init_node() {
     echo "初始化节点环境..."
     bash $SIGHTIQ_SCRIPT_DIR/init_env.sh
+    bash $SIGHTIQ_SCRIPT_DIR/utils/sightiq_del_k8s.sh
     check_node_env
     echo "开始启动 Kubernetes 集群..."
-    bash $SIGHTIQ_SCRIPT_DIR/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP} -k ghcr.io/flannel-io/flannel:v0.27.0 ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1 docker.io/flannel/flannel-cni-plugin:v1.1.2 docker.io/flannel/flannel-cni-plugin:v1.1.2
-    sudo kubeadm config images pull --config=$SIGHTIQ_ROOT/k8s/init-config.yaml --v=5
-    bash $SIGHTIQ_SCRIPT_DIR/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP}
-    echo "初始化集群..."
-    sudo kubeadm init --config $SIGHTIQ_ROOT/k8s/init-config.yaml --v=5
+    bash $SIGHTIQ_SCRIPT_DIR/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP} ghcr.io/flannel-io/flannel:v0.27.0 ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1 docker.io/flannel/flannel-cni-plugin:v1.1.2 docker.io/flannel/flannel-cni-plugin:v1.1.2
     init_kubectl
 }
 
