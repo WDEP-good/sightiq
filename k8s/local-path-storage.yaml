@@ -4,6 +4,7 @@ metadata:
   name: local-path-storage
 
 ---
+
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -11,6 +12,7 @@ metadata:
   namespace: local-path-storage
 
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -22,6 +24,7 @@ rules:
     verbs: ["get", "list", "watch", "create", "patch", "update", "delete"]
 
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -41,6 +44,7 @@ rules:
     verbs: ["get", "list", "watch"]
 
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -56,6 +60,7 @@ subjects:
     namespace: local-path-storage
 
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -70,13 +75,13 @@ subjects:
     namespace: local-path-storage
 
 ---
+
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: local-path-provisioner
   namespace: local-path-storage
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: local-path-provisioner
@@ -99,6 +104,8 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config/
+            - name: local-path
+              mountPath: /opt/local-path-provisioner
           env:
             - name: POD_NAMESPACE
               valueFrom:
@@ -110,8 +117,13 @@ spec:
         - name: config-volume
           configMap:
             name: local-path-config
+        - name: local-path
+          hostPath:
+            path: /opt/local-path-provisioner
+            type: DirectoryOrCreate
 
 ---
+
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -121,6 +133,7 @@ volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Delete
 
 ---
+
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -129,12 +142,12 @@ metadata:
 data:
   config.json: |-
     {
-            "nodePathMap":[
-            {
-                    "node":"DEFAULT_PATH_FOR_NON_LISTED_NODES",
-                    "paths":["/opt/local-path-provisioner"]
-            }
-            ]
+      "nodePathMap":[
+        {
+          "node":"DEFAULT_PATH_FOR_NON_LISTED_NODES",
+          "paths":["/opt/local-path-provisioner"]
+        }
+      ]
     }
   setup: |-
     #!/bin/sh
@@ -156,6 +169,6 @@ data:
           operator: Exists
           effect: NoSchedule
       containers:
-      - name: helper-pod
-        image: busybox
-        imagePullPolicy: IfNotPresent
+        - name: helper-pod
+          image: busybox
+          imagePullPolicy: IfNotPresent

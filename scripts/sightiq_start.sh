@@ -37,7 +37,7 @@ function init_env() {
 }
 
 function k8s() {
-    bash start_k8s.sh -p ${PROXY_IP} -r ${RUNTIME}
+    bash $SIGHTIQ_SCRIPT_DIR/sightiq_k8s_master.sh -p ${PROXY_IP} -r ${RUNTIME}
     
     echo "🔄 正在生成子节点加入命令..."
     JOIN_CMD=$(kubeadm token create --print-join-command)

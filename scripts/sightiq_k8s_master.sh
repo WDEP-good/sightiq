@@ -41,7 +41,7 @@ function check_k8s_env() {
     sudo sed -i '/swap/s/^/#/' /etc/fstab
 }
 
-function is_k8s_initialized() {
+function k8s_initialized() {
     echo "检查是否存在 Kubernetes 环境..."
     if [ -f "/etc/kubernetes/admin.conf" ] ||
         [ -d "/etc/kubernetes/manifests" ] ||
@@ -55,7 +55,7 @@ function is_k8s_initialized() {
         echo "✅ 环境清理完成"
         return 0
     fi
-    return 1
+    echo "❌ 未检测到已存在的 Kubernetes 环境"
 }
 
 function init_kubectl() {
@@ -75,10 +75,7 @@ function init_kubectl() {
 
 function startK8s() {
     check_k8s_env
-    if is_k8s_initialized; then
-        echo "⏳ 等待 30 秒确保服务完全停止..."
-        sleep 30
-    fi
+    k8s_initialized
     echo "开始启动 Kubernetes 集群..."
     bash ${SIGHTIQ_SCRIPT_DIR}/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP} -k ghcr.io/flannel-io/flannel:v0.27.0 ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1 docker.io/flannel/flannel-cni-plugin:v1.1.2 docker.io/flannel/flannel-cni-plugin:v1.1.2
     sudo kubeadm config images pull --config=$SIGHTIQ_ROOT/k8s/init-config.yaml --v=5

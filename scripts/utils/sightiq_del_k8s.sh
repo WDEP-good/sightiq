@@ -4,10 +4,10 @@ function del_k8s() {
     echo "🧹 开始清理 Kubernetes 环境..."
     
     echo "清理工作负载..."
-    kubectl delete all --all --all-namespaces
-    kubectl delete pvc --all --all-namespaces
-    kubectl delete pv --all
-    kubectl delete ns starrocks local-path-storage
+    kubectl delete all --all --all-namespaces --force --grace-period=0
+    kubectl delete pvc --all --all-namespaces --force --grace-period=0
+    kubectl delete pv --all --force --grace-period=0
+    kubectl delete ns starrocks local-path-storage --force --grace-period=0
 
     echo "清理网络组件..."
     sudo ip link delete cni0 2>/dev/null || true
