@@ -82,7 +82,6 @@ function startK8s() {
     bash ${SIGHTIQ_SCRIPT_DIR}/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP}
     echo "初始化集群..."
     sudo kubeadm init --config $SIGHTIQ_ROOT/k8s/init-config.yaml --v=5
-    init_kubectl
 }
 
 startK8s
