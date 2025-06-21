@@ -6,16 +6,16 @@ set -o pipefail
 # 初始化变量
 RUNTIME="containerd"
 PROXY_IP=""
-KEEP_PROXY="true"
+KEEP_PROXY="false"
 declare -a IMAGE_NAMES
 
 # 显示使用方法
 function show_usage() {
-    echo "💡 用法: $0 -r|--runtime <运行时类型> [-p|--proxy <代理IP>] [-k|--keep-proxy] <镜像1> [镜像2...]"
+    echo "💡 用法: $0 -r|--runtime <运行时类型> [-p|--proxy <代理IP>] [-k] <镜像1> [镜像2...]"
     echo "选项:"
     echo "  -r, --runtime      指定运行时类型 (docker 或 containerd)"
     echo "  -p, --proxy        可选: 指定代理服务器IP"
-    echo "  -k, --keep-proxy   可选: 拉取完成后保持代理设置"
+    echo "  -k                 可选: 拉取完成后保持代理设置（不需要值）"
     exit 1
 }
 
@@ -23,18 +23,30 @@ function show_usage() {
 while [[ $# -gt 0 ]]; do
     case $1 in
         -r|--runtime)
+            if [ -z "$2" ] || [[ "$2" == -* ]]; then
+                echo "❌ 错误: -r|--runtime 选项需要一个值"
+                show_usage
+            fi
             RUNTIME="$2"
             shift 2
             ;;
         -p|--proxy)
+            if [ -z "$2" ] || [[ "$2" == -* ]]; then
+                echo "❌ 错误: -p|--proxy 选项需要一个值"
+                show_usage
+            fi
             PROXY_IP="$2"
             shift 2
             ;;
-        -k|--keep-proxy)
+        -k)
             KEEP_PROXY="true"
             shift
             ;;
         -h|--help)
+            show_usage
+            ;;
+        -*)
+            echo "❌ 错误: 未知选项 $1"
             show_usage
             ;;
         *)
@@ -74,7 +86,6 @@ function setProxy() {
 [Service]
 Environment="HTTP_PROXY=http://${PROXY_IP}"
 Environment="HTTPS_PROXY=http://${PROXY_IP}"
-Environment="NO_PROXY=127.0.0.1,localhost,10.96.0.0/12,10.244.0.0/16"
 EOF
         sudo systemctl daemon-reload
         sudo systemctl restart containerd
@@ -85,7 +96,6 @@ EOF
 [Service]
 Environment="HTTP_PROXY=http://${PROXY_IP}"
 Environment="HTTPS_PROXY=http://${PROXY_IP}"
-Environment="NO_PROXY=127.0.0.1,localhost,10.96.0.0/12,10.244.0.0/16"
 EOF
         sudo systemctl daemon-reload
         sudo systemctl restart docker
