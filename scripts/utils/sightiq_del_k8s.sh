@@ -3,13 +3,13 @@
 function del_k8s() {
     echo "🧹 开始清理 Kubernetes 环境..."
     
-    echo "清理工作负载..."
+    echo "🔄 清理工作负载..."
     kubectl delete all --all --all-namespaces --force --grace-period=0
     kubectl delete pvc --all --all-namespaces --force --grace-period=0
     kubectl delete pv --all --force --grace-period=0
     kubectl delete ns starrocks local-path-storage --force --grace-period=0
 
-    echo "清理网络组件..."
+    echo "🌐 清理网络组件..."
     sudo ip link delete cni0 2>/dev/null || true
     sudo ip link delete flannel.1 2>/dev/null || true
     sudo rm -rf /var/lib/cni/
@@ -17,7 +17,7 @@ function del_k8s() {
     sudo rm -rf /run/flannel/
     sudo rm -rf /var/run/flannel/
 
-    echo "清理 iptables 规则..."
+    echo "🔧 清理 iptables 规则..."
     sudo iptables -F
     sudo iptables -X
     sudo iptables -t nat -F
@@ -27,10 +27,10 @@ function del_k8s() {
     sudo iptables -t mangle -F
     sudo iptables -t mangle -X
 
-    echo "重置 kubeadm..."
+    echo "🔄 重置 kubeadm..."
     sudo kubeadm reset -f
 
-    echo "清理系统文件..."
+    echo "📂 清理系统文件..."
     sudo rm -rf /etc/kubernetes/*
     sudo rm -rf /var/lib/etcd
     sudo rm -rf /var/lib/kubelet/*
@@ -40,7 +40,11 @@ function del_k8s() {
     sudo rm -rf /var/lib/containerd/* || true
     sudo rm -rf ~/.kube
 
-    echo "✅ Kubernetes 环境清理完成！"
+    echo "🔄 重启 containerd 和 kubelet..."
+    sudo systemctl restart containerd || true
+    sudo systemctl restart kubelet || true
+
+    echo "✨ Kubernetes 环境清理完成！"
 }
 
 del_k8s
