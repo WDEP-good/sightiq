@@ -10,17 +10,25 @@ RUNTIME="containerd"
 # 参数解析
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --proxy-ip)
+        --proxy-ip|-p)
             PROXY_IP="$2"
             shift 2
             ;;
-        --runtime)
+        --runtime|-r)
             RUNTIME="$2"
             shift 2
             ;;
+        --help|-h)
+            echo "用法: $0 [选项]"
+            echo "选项:"
+            echo "  -p, --proxy-ip <IP地址>    设置代理IP地址"
+            echo "  -r, --runtime <类型>       设置运行时类型"
+            echo "  -h, --help                显示此帮助信息"
+            exit 0
+            ;;
         *)
-            echo "未知参数: $1"
-            echo "用法: $0 [--proxy-ip PROXY_IP] [--runtime RUNTIME]"
+            echo "错误: 未知参数 $1"
+            echo "使用 -h 或 --help 查看帮助信息"
             exit 1
             ;;
     esac
