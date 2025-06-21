@@ -3,6 +3,9 @@
 PROXY_IP=""
 RUNTIME="containerd"
 
+export SIGHTIQ_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export SIGHTIQ_ROOT="$(cd "$SIGHTIQ_SCRIPT_DIR/.." && pwd)"
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         --proxy-ip|-p)

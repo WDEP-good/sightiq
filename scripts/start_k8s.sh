@@ -1,13 +1,8 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-# 默认值设置
 PROXY_IP=""
 RUNTIME="containerd"
 
-# 参数解析
 while [[ $# -gt 0 ]]; do
     case $1 in
         --proxy-ip|-p)
@@ -56,7 +51,7 @@ function is_k8s_initialized() {
             sudo ctr --namespace k8s.io containers ls >/dev/null 2>&1); then
         echo "⚠️ 检测到已存在的 Kubernetes 环境"
         echo "🧹 正在执行环境清理..."
-        bash ${SCRIPT_DIR}/utils/sightiq_del_k8s.sh
+        bash ${SIGHTIQ_SCRIPT_DIR}/utils/sightiq_del_k8s.sh
         echo "✅ 环境清理完成"
         return 0
     fi
@@ -71,10 +66,10 @@ function init_kubectl() {
     echo 'KUBELET_KUBEADM_ARGS=""' >/var/lib/kubelet/kubeadm-flags.env
     # 禁用 CoreDNS 的内存限制
     kubectl patch deployment -n kube-system coredns -p '{"spec":{"template":{"spec":{"containers":[{"name":"coredns","resources":null}]}}}}'
-    kubectl apply -f ${PROJECT_ROOT}/k8s/kube-flannel.yaml
+    kubectl apply -f $SIGHTIQ_ROOT/k8s/kube-flannel.yaml
     kubectl rollout status -n kube-system daemonset/kube-flannel --timeout=120s
     # 创建默认PVC
-    kubectl apply -f ${PROJECT_ROOT}/k8s/local-path-storage.yaml
+    kubectl apply -f $SIGHTIQ_ROOT/k8s/local-path-storage.yaml
     kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 }
 
@@ -85,11 +80,11 @@ function startK8s() {
         sleep 30
     fi
     echo "开始启动 Kubernetes 集群..."
-    bash ${SCRIPT_DIR}/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP} -k ghcr.io/flannel-io/flannel:v0.27.0 ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1 docker.io/flannel/flannel-cni-plugin:v1.1.2 docker.io/flannel/flannel-cni-plugin:v1.1.2
-    sudo kubeadm config images pull --config=${PROJECT_ROOT}/k8s/init-config.yaml --v=5
-    bash ${SCRIPT_DIR}/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP}
+    bash ${SIGHTIQ_SCRIPT_DIR}/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP} -k ghcr.io/flannel-io/flannel:v0.27.0 ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1 docker.io/flannel/flannel-cni-plugin:v1.1.2 docker.io/flannel/flannel-cni-plugin:v1.1.2
+    sudo kubeadm config images pull --config=$SIGHTIQ_ROOT/k8s/init-config.yaml --v=5
+    bash ${SIGHTIQ_SCRIPT_DIR}/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP}
     echo "初始化集群..."
-    sudo kubeadm init --config ${PROJECT_ROOT}/k8s/init-config.yaml --v=5
+    sudo kubeadm init --config $SIGHTIQ_ROOT/k8s/init-config.yaml --v=5
     init_kubectl
 }
 
