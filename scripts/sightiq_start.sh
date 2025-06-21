@@ -34,7 +34,7 @@ function init_env() {
 }
 
 function k8s() {
-    bash start_k8s.sh
+    bash start_k8s.sh -p ${PROXY_IP} -r ${RUNTIME}
 }
 
 function redis() {
@@ -42,14 +42,11 @@ function redis() {
 }
 
 function starrocks() {
-    bash start_starrocks.sh --proxy-ip ${PROXY_IP} --runtime ${RUNTIME}
+    bash start_starrocks.sh
 }
 
 function start_sightiq() {
     echo "开始启动SightIQ..."
-    echo "使用的配置："
-    echo "PROXY_IP: ${PROXY_IP}"
-    echo "RUNTIME: ${RUNTIME}"
     init_env
     k8s
     redis

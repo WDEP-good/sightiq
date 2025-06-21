@@ -34,13 +34,6 @@ function del_k8s() {
     echo "重置 kubeadm..."
     sudo kubeadm reset -f
 
-    # 停止和禁用服务
-    echo "停止相关服务..."
-    sudo systemctl stop kubelet
-    sudo systemctl disable kubelet
-    sudo systemctl stop docker || true
-    sudo systemctl stop containerd || true
-
     # 清理目录和文件
     echo "清理系统文件..."
     sudo rm -rf /etc/kubernetes/*
