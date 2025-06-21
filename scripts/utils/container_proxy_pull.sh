@@ -3,16 +3,51 @@
 set -e
 set -o pipefail
 
-export RUNTIME=$1
-export PROXY_IP=$2
-export KEEP_PROXY=${3:-"false"}
-export IMAGE_NAMES=(${@:4})
+# 初始化变量
+RUNTIME="containerd"
+PROXY_IP=""
+KEEP_PROXY="true"
+declare -a IMAGE_NAMES
 
-# 校验所有参数
-if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
-    echo "❌ 错误: 前三个参数都不能为空"
-    echo "💡 用法: $0 <运行时类型> <代理IP> <是否保持代理> [镜像1 镜像2...]"
+# 显示使用方法
+function show_usage() {
+    echo "💡 用法: $0 -r|--runtime <运行时类型> [-p|--proxy <代理IP>] [-k|--keep-proxy] <镜像1> [镜像2...]"
+    echo "选项:"
+    echo "  -r, --runtime      指定运行时类型 (docker 或 containerd)"
+    echo "  -p, --proxy        可选: 指定代理服务器IP"
+    echo "  -k, --keep-proxy   可选: 拉取完成后保持代理设置"
     exit 1
+}
+
+# 解析参数
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -r|--runtime)
+            RUNTIME="$2"
+            shift 2
+            ;;
+        -p|--proxy)
+            PROXY_IP="$2"
+            shift 2
+            ;;
+        -k|--keep-proxy)
+            KEEP_PROXY="true"
+            shift
+            ;;
+        -h|--help)
+            show_usage
+            ;;
+        *)
+            IMAGE_NAMES+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# 验证必需参数
+if [ -z "$RUNTIME" ]; then
+    echo "❌ 错误: 必须指定运行时类型"
+    show_usage
 fi
 
 function validate_runtime() {
@@ -23,6 +58,12 @@ function validate_runtime() {
 }
 
 function setProxy() {
+    # 如果没有设置代理IP，则跳过代理设置
+    if [ -z "${PROXY_IP}" ]; then
+        echo "ℹ️ 未设置代理IP，将直接拉取镜像"
+        return
+    fi
+
     echo "🔧 设置代理..."
     export http_proxy=http://${PROXY_IP}
     export https_proxy=http://${PROXY_IP}
@@ -53,6 +94,11 @@ EOF
 }
 
 function unsetProxy() {
+    # 如果没有设置代理IP，则无需取消代理
+    if [ -z "${PROXY_IP}" ]; then
+        return
+    fi
+
     if [ "${KEEP_PROXY}" == "true" ]; then
         echo "🔒 保持代理设置..."
         return
@@ -81,11 +127,16 @@ function pullImage() {
     
     # 如果没有传递镜像参数，则只设置代理后退出
     if [ ${#IMAGE_NAMES[@]} -eq 0 ]; then
-        echo "ℹ️ 未指定镜像，仅设置代理"
-        if [ "${KEEP_PROXY}" == "false" ]; then
-            unsetProxy
+        if [ -n "${PROXY_IP}" ]; then
+            echo "ℹ️ 未指定镜像，仅设置代理"
+            if [ "${KEEP_PROXY}" == "false" ]; then
+                unsetProxy
+            fi
+        else
+            echo "❌ 错误: 必须指定至少一个镜像"
+            show_usage
         fi
-        exit 0
+        exit 1
     fi
     
     echo "🚀 开始拉取镜像..."

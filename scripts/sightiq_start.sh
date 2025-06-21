@@ -18,9 +18,10 @@ function starrocks() {
 
 
 function start_sightiq() {
+    echo "开始启动SightIQ..."
     init_env
     k8s
     redis
 }
 
-start
+start_sightiq

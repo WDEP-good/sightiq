@@ -3,32 +3,43 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-echo "开始启动项目..."
+# 默认值设置
+PROXY_IP=""
+RUNTIME="containerd"
 
-export PROXY_IP=${1:-} # 允许空代理设置
-export MASTER_IP=192.168.10.140
-
-function validate_runtime() {
-    if [ -z "${PROXY_IP}" ]; then
-        echo "请设置代理IP"
-        exit 1
-    fi
-    if [ -z "${MASTER_IP}" ]; then
-        echo "请设置Master IP"
-        exit 1
-    fi
-}
+# 参数解析
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --proxy-ip)
+            PROXY_IP="$2"
+            shift 2
+            ;;
+        --runtime)
+            RUNTIME="$2"
+            shift 2
+            ;;
+        *)
+            echo "未知参数: $1"
+            echo "用法: $0 [--proxy-ip PROXY_IP] [--runtime RUNTIME]"
+            exit 1
+            ;;
+    esac
+done
 
 function check_k8s_env() {
     echo "检查时间..."
     date
     sudo timedatectl set-ntp true
+    sudo timedatectl set-timezone Asia/Shanghai
+    
+    echo "关闭 swap..."
+    sudo swapoff -a
+    # 注释掉 /etc/fstab 中的 swap 条目以防止重启后自动启用
+    sudo sed -i '/swap/s/^/#/' /etc/fstab
 }
 
 function is_k8s_initialized() {
     echo "检查是否存在 Kubernetes 环境..."
-
-    # 检查关键文件和目录
     if [ -f "/etc/kubernetes/admin.conf" ] ||
         [ -d "/etc/kubernetes/manifests" ] ||
         [ -d "/var/lib/etcd" ] ||
@@ -41,25 +52,10 @@ function is_k8s_initialized() {
         echo "✅ 环境清理完成"
         return 0
     fi
-
-    return 1 # 返回 false，表示环境不存在
+    return 1
 }
 
-function starrK8s() {
-    validate_runtime
-    check_k8s_env
-    if is_k8s_initialized; then
-        echo "⏳ 等待 30 秒确保服务完全停止..."
-        sleep 30
-    fi
-
-    echo "开始启动 Kubernetes 集群..."
-    bash ${SCRIPT_DIR}/utils/container_proxy_pull.sh containerd ${PROXY_IP} true ghcr.io/flannel-io/flannel:v0.27.0 ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1 docker.io/flannel/flannel-cni-plugin:v1.1.2 docker.io/flannel/flannel-cni-plugin:v1.1.2
-    sudo kubeadm config images pull --config=${PROJECT_ROOT}/k8s/init-config.yaml --v=5
-    bash ${SCRIPT_DIR}/utils/container_proxy_pull.sh containerd ${PROXY_IP} false
-    echo "初始化集群..."
-    export MASTER_IP=192.168.10.140
-    sudo kubeadm init --config ${PROJECT_ROOT}/k8s/init-config.yaml --v=5
+function init_kubectl() {
     echo "配置 kubectl..."
     mkdir -p $HOME/.kube
     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -74,4 +70,19 @@ function starrK8s() {
     kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 }
 
-starrK8s
+function startK8s() {
+    check_k8s_env
+    if is_k8s_initialized; then
+        echo "⏳ 等待 30 秒确保服务完全停止..."
+        sleep 30
+    fi
+    echo "开始启动 Kubernetes 集群..."
+    bash ${SCRIPT_DIR}/utils/container_proxy_pull.sh ${RUNTIME} ${PROXY_IP} true ghcr.io/flannel-io/flannel:v0.27.0 ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1 docker.io/flannel/flannel-cni-plugin:v1.1.2 docker.io/flannel/flannel-cni-plugin:v1.1.2
+    sudo kubeadm config images pull --config=${PROJECT_ROOT}/k8s/init-config.yaml --v=5
+    bash ${SCRIPT_DIR}/utils/container_proxy_pull.sh ${RUNTIME} ${PROXY_IP} false
+    echo "初始化集群..."
+    sudo kubeadm init --config ${PROJECT_ROOT}/k8s/init-config.yaml --v=5
+    init_kubectl
+}
+
+startK8s
