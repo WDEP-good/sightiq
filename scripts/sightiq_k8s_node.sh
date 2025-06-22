@@ -54,7 +54,6 @@ function init_node() {
     check_node_env
     echo "🚀 正在启动 Kubernetes 集群..."
     bash $SIGHTIQ_SCRIPT_DIR/utils/container_proxy_pull.sh -r ${RUNTIME} -p ${PROXY_IP} ghcr.io/flannel-io/flannel:v0.27.0 ghcr.io/flannel-io/flannel-cni-plugin:v1.7.1-flannel1 docker.io/flannel/flannel-cni-plugin:v1.1.2 docker.io/flannel/flannel-cni-plugin:v1.1.2
-    init_kubectl
     echo "🎉 节点初始化成功！"
 }
 
